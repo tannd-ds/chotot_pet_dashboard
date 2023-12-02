@@ -63,10 +63,16 @@ filter_bar = html.Div(
         ),
         dcc.RangeSlider(
             id='price-slider',
-            min=0, max=10_000_000, step=10_000,
-            marks=None,
-            value=[0, 20_000_000],
-            className="min-w-[30rem]"
+            marks={0: '0', 1: '10K', 2: '100K',
+                   3: '1M', 4: '10M', 5: '100M', 6: '1B'},
+            value=[0, 6],
+            dots=False,
+            step=0.1,
+            tooltip={"placement": "bottom", "always_visible": False},
+            updatemode='drag',
+            allowCross=False,
+            className="price-slider min-w-[30rem]",
+            verticalHeight=1,
         ),
     ],
     className="flex items-center gap-4"
@@ -193,10 +199,13 @@ def update_map_fig(chosen_pet_type, price_range):
     else:
         filtered_df = pet_data.df_types[chosen_pet_type]
 
+    price_range = [p ** 10 for p in price_range]
     # filter price range
     if price_range is not None and len(price_range) == 2:
-        filtered_df = filtered_df[(filtered_df['price'] >= price_range[0]) & (
-            filtered_df['price'] <= price_range[1])]
+        filtered_df = filtered_df[
+            (filtered_df['price'] >= price_range[0]) &
+            (filtered_df['price'] <= price_range[1])
+        ]
 
     return (
         update_map_figure(df=filtered_df),
