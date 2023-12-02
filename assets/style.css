@@ -1,0 +1,31 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.rc-slider-track {
+    background-color: #fca311;
+}
+
+.rc-slider-handle {
+    background-color: #fcbf49;
+    border: 0;
+}
+
+.rc-slider-dot-active {
+    border-color: #fca311;
+}
+
+.dash-debug-menu__outer.dash-debug-menu__outer--closed {
+    display: none;
+}
+
+.dash-debug-menu.dash-debug-menu--closed {
+    display: none;
+
+}
+
+.tab-content {
+    flex-grow: 1;
+}
