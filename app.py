@@ -2,17 +2,15 @@
 Dashboard for Chotot.com Pet Data 
 """
 import dash
-import pandas as pd
-import numpy as np
-import plotly.express as px
-from dash import Dash, dcc, html, Input, Output, State, callback
+from dash import dcc, html, Input, Output, callback
 from data.load_data import PetData
 from visualizations.displayGraph import *
 
 
-external_script = ["https://tailwindcss.com/",
-                   {"src": "https://cdn.tailwindcss.com"}
-                   ]
+external_script = [
+    "https://tailwindcss.com/",
+    {"src": "https://cdn.tailwindcss.com"}
+]
 
 app = dash.Dash(
     __name__,
@@ -26,32 +24,80 @@ BENTO_BOX_HEIGHT = f'calc((100vh_-_{FILTER_BAR_HEIGHT}_-_2rem)/3)'
 pet_data = PetData('./data/new_pet_30_columns.json')
 df_ = pet_data.df
 
-# Create a scatter mapbox plot
-contents = list(range(7))
+contents = list(range(4))
 
 fig = update_map_figure(df=df_)
-contents[0] = html.Div(
-    children=[
-        html.Div(
-            "OK", className="relative p-0 rounded-xl border-2 border-slate-400/10 bg-white flex justify-between items-start overflow-hidden")
-        for i in range(3)],
-    className=f'relative grid grid-cols-3 auto-rows-[{BENTO_BOX_HEIGHT}] gap-4'
-)
-
 contents[1] = display_graph(fig=fig,
                             graph_id='map-graph',
-                            show_display_mode_bar=False,
-                            style="w-full h-full relative")
+                            show_display_mode_bar=False)
 
-fig1 = update_box_figure(df=pet_data.df_types['Mèo'])
-contents[2] = display_graph(fig=fig1, graph_id='box-graph')
+fig1 = update_type_box_figure(df=df_)
+number_items_contents = [
+    {
+        "title": len(pet_data.df),
+        "description": "Tổng Số Bài Đăng",
+        "id": "n-post",
+    },
+    {
+        "title": f"{len(df_['pet_type_name'].unique())}",
+        "description": "Số Loại Thú Cưng",
+        "id": "n-pet-type"
+    },
+    {
+        "title": pet_data.get_mean_price_simplified(),
+        "description": "Giá Trung Bình",
+        "id": "mean-price"
+    },
+    {
+        "title": pet_data.get_most_region(),
+        "description": "Khu Vực Sôi Nổi Nhất",
+        "id": "most-region",
+        "is_long_text": True,
+    },
+]
 
-fig3 = update_pet_breed_bar_figure(df=pet_data.get_breed_groups('Mèo'))
-contents[4] = display_graph(
+number_items = contents[0] = html.Div(
+    children=[
+        html.Div(
+            children=[
+                html.Div(
+                    [
+                        html.Div(
+                            children=[content['description']],
+                            className="text-md font-bold truncate  "
+                        ),
+                        html.Div(
+                            children=[content['title']],
+                            className=f"{'text-6xl' if 'is_long_text' in content else 'text-7xl'} font-bold text-[#0C356A]",
+                            id=content['id'],
+                        ),
+
+                    ],
+                    className="h-full px-6 py-6 flex flex-col justify-between"
+                )
+            ],
+            className="col-span-1 w-full h-[10rem] rounded-xl border-2 border-slate-400/10 bg-white",
+        ) for content in number_items_contents]
+    + [
+        html.Div(
+            children=[
+                display_graph(
+                    fig=fig1, graph_id='box-graph')
+            ],
+            className="col-span-full rounded-xl border-2 border-slate-400/10 bg-white overflow-hidden flex justify-center items-center"
+        )
+    ],
+    className='w-full h-full relative grid grid-cols-4 gap-4 grid-rows-[10rem_auto]'
+)
+
+fig3 = update_pet_breed_bar_figure(
+    df=pet_data.get_breed_groups('Mèo'),
+    pet_type=''
+)
+contents[2] = display_graph(
     fig=fig3,
     graph_id='pet-breed-bar-graph',
     show_display_mode_bar=False,
-    style="w-full h-full relative"
 )
 
 
@@ -98,14 +144,9 @@ filter_bar = html.Div(
 main_content = html.Div(
     children=[
         html.Div(
-            children=[
-                html.Div(
-                    children=[contents[i]],
-                    className="w-full"
-                )
-            ],
-            className=f'{"row-span-3" if i==1 else "row-span-1"} {"col-span-2" if i in [0, 2] else ""} {"relative p-0 rounded-xl border-2 border-slate-400/10 bg-white flex justify-center items-start overflow-hidden origin-top-left hover:overflow-visible hover:z-[99] transition-all duration-200" if i != 0 else ""}'
-        ) for i in range(5)
+            children=[contents[i]],
+            className=f'{"row-span-3" if i==1 else ""} {"col-span-2 row-span-2" if i in [0] else ""} relative p-0 {"rounded-xl border-2 border-slate-400/10 bg-white" if i != 0 else ""} flex justify-center items-center overflow-hidden'
+        ) for i in range(4)
     ],
     className=f'relative pt-2 grid grid-cols-3 auto-rows-[{BENTO_BOX_HEIGHT}] gap-[1rem]'
 )
@@ -195,7 +236,7 @@ app.layout = html.Div(
                           'flexDirection': 'row'},
         )
     ],
-    className="flex justify-start gap-2 bg-white",
+    className="flex justify-start gap-2 bg-zinc-100",
 )
 
 
@@ -204,6 +245,10 @@ app.layout = html.Div(
         Output('map-graph', 'figure'),
         Output('box-graph', 'figure'),
         Output('pet-breed-bar-graph', 'figure'),
+        Output('mean-price', 'children'),
+        Output('n-pet-type', 'children'),
+        Output('most-region', 'children'),
+        Output('n-post', 'children')
     ],
     [
         Input('pet-type-dropdown', 'value'),
@@ -211,7 +256,7 @@ app.layout = html.Div(
 
     ]
 )
-def update_map_fig(chosen_pet_type, price_range):
+def update_dashboard(chosen_pet_type, price_range):
     # filter pet_type
     if chosen_pet_type is None:
         filtered_df = df_
@@ -226,11 +271,34 @@ def update_map_fig(chosen_pet_type, price_range):
             (filtered_df['price'] <= price_range[1])
         ]
 
-    return (
-        update_map_figure(df=filtered_df),
-        update_box_figure(df=filtered_df),
-        update_pet_type_count_figure(df=filtered_df)
+    map_fig = update_map_figure(df=filtered_df)
+    box_fig = update_type_box_figure(df=filtered_df)
+    breed_bar_fig = update_pet_type_count_figure(df=filtered_df)
+    n_type_number_items = len(pet_data.df.pet_type_name.unique())
+    n_post = len(pet_data.df)
+    if chosen_pet_type is not None:
+        box_fig = update_breed_box_figure(
+            df=filtered_df, pet_type=chosen_pet_type)
+        breed_bar_fig = update_pet_breed_bar_figure(
+            df=pet_data.get_breed_groups(chosen_pet_type).head(10),
+            pet_type=chosen_pet_type,
+        )
+        n_type_number_items = len(
+            pet_data.df_types[chosen_pet_type].pet_breed_name.unique()
+        )
+        n_post = len(pet_data.df_types[chosen_pet_type])
+
+    output_ = (
+        map_fig,
+        box_fig,
+        breed_bar_fig,
+        # Apply filters on number_items
+        pet_data.get_mean_price_simplified(chosen_pet_type),
+        n_type_number_items,
+        pet_data.get_most_region(pet_type=chosen_pet_type),
+        n_post
     )
+    return output_
 
 
 if __name__ == "__main__":
