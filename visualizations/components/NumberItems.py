@@ -6,27 +6,27 @@ def create_number_items(data: PetData):
     number_items_contents = [
         {
             "title": len(data.df),
-            "description": "Tổng Số Bài Đăng",
+            "description": "Tổng Số Thú Cưng",
             "id": "n-post",
-            "bg-color": "#37b7ee"
+            "bg-color": "bg-gradient-to-tr from-[#37b7ee] to-[#86d1f3] to-80%"
         },
         {
             "title": f"{len(data.df['pet_type_name'].unique())}",
             "description": "Số Loại Thú Cưng",
             "id": "n-pet-type",
-            "bg-color": "#40d1a6"
+            "bg-color": "bg-gradient-to-tr from-[#40d1a6] to-[#8ADAB2] to-80%"
         },
         {
             "title": data.get_mean_price_simplified(),
             "description": "Giá Trung Bình",
             "id": "mean-price",
-            "bg-color": "#653df4",
+            "bg-color": "bg-gradient-to-tr from-[#653df4] to-[#B15EFF] to-80%",
         },
         {
             "title": data.get_most_region(),
             "description": "Khu Vực Sôi Nổi Nhất",
             "id": "most-region",
-            "bg-color": "#3b82f5",
+            "bg-color": "bg-gradient-to-tr from-[#3b82f5] to-[#8E8FFA] to-80%",
             "is_long_text": True,
         },
     ]
@@ -49,6 +49,6 @@ def create_number_items(data: PetData):
                     className="h-full px-6 py-6 flex flex-col justify-between text-white"
                 )
             ],
-            className=f"col-span-1 w-full h-[10rem] rounded-xl border-2 border-slate-400/10 bg-[{content['bg-color']}]",
+            className=f"col-span-1 w-full h-[10rem] rounded-xl {content['bg-color']}",
         ) for content in number_items_contents
     ]
