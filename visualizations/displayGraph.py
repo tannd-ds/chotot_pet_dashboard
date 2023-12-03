@@ -1,6 +1,6 @@
 import pandas as pd
 import plotly.express as px
-from dash import Dash, dcc, html, Input, Output, State, callback
+from dash import dcc, html
 
 
 def display_graph(fig, graph_id: str, show_display_mode_bar: bool = False, style: str = "w-full relative"):
