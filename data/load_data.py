@@ -28,6 +28,9 @@ class PetData():
         return df
 
     def get_breed_groups(self, pet_type: str, ascending: bool = False):
+        """
+        Return a pandas.Series that count number of pet in each pet_breed.
+        """
         data = self.df_types[pet_type].groupby(['pet_breed_name'])[
             'price'].count().sort_values(ascending=ascending)
         data.index = pd.Series(data.index).apply(
@@ -35,6 +38,9 @@ class PetData():
         return data
 
     def get_mean_price_simplified(self, pet_type: None | str = None):
+        """
+        Return a number (as a string) that is simplified to 'K' 'M' or 'B'
+        """
         mean_price = self.df.price.mean()
         if pet_type is not None:
             mean_price = self.df_types[pet_type].price.mean()
@@ -50,6 +56,9 @@ class PetData():
         return mean_price
 
     def get_most_region(self, pet_type: None | str = None):
+        """
+        Return the name of the region that has the most number of pet being sold.
+        """
         df_filtered = self.df
         if pet_type is not None:
             df_filtered = self.df_types[pet_type]
