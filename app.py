@@ -106,7 +106,6 @@ app.layout = html.Div(
     [
         Input('pet-type-dropdown', 'value'),
         Input('price-slider', 'value'),
-
     ]
 )
 def update_dashboard(chosen_pet_type, price_range):

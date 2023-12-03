@@ -5,16 +5,16 @@
 }
 
 .rc-slider-track {
-    background-color: #fca311;
+    background-color: #653df4;
 }
 
 .rc-slider-handle {
-    background-color: #fcbf49;
+    background-color: #653df4;
     border: 0;
 }
 
 .rc-slider-dot-active {
-    border-color: #fca311;
+    border-color: #653df4;
 }
 
 .dash-debug-menu__outer.dash-debug-menu__outer--closed {

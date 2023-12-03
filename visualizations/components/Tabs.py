@@ -2,8 +2,8 @@ from dash import dcc, html
 
 # Styling
 TAB_SELECTED_BG_COLORS = {
-    'style': '#fca311',
-    'selected_style': '#fcbf49',
+    'style': 'white',
+    'selected_style': '#f4f4f5',
 }
 TAB_CONTENT_STYLES = {
     name: {
@@ -12,7 +12,7 @@ TAB_CONTENT_STYLES = {
         'width': '80%',
         'aspect-ratio': 'square',
         'background-color': TAB_SELECTED_BG_COLORS[name],
-        'border-radius': '0.25rem',
+        'border-radius': '0.5rem 0 0 0.5rem',
         'border': '0',
         'font-weight': '900',
     } for name in ['style', 'selected_style']
@@ -46,8 +46,8 @@ def create_tabs(tab_contents):
                 'left': '0',
                 'display': 'flex',
                 'flex-direction': 'column',
-                'background-color': '#fca311',
-                'align-items': 'center',
+                'background-color': 'white',
+                'align-items': 'flex-end',
                 'gap': '1rem'
             },
             parent_style={
