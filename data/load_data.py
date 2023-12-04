@@ -71,3 +71,22 @@ class PetData():
         if result_region == 'Tp Hồ Chí Minh':
             return 'TP.HCM'
         return result_region
+
+    def get_options(self, col_name: str):
+        if col_name not in self.df.columns:
+            return [f"Can't find {col_name}"]
+        return self.df[col_name].unique().tolist()
+
+    def get_breed_from_breed_name(self, breed_name: 'str'):
+        if breed_name in self.get_options('pet_breed_name'):
+            result = self.df[self.df['pet_breed_name'] == breed_name]['pet_breed'] \
+                .iloc[0]
+            return result
+        return 0
+
+    def get_approximate_coordinate(self, ward_name: 'str'):
+        if ward_name in self.get_options('ward_name'):
+            longitude, latitude = self.df[self.df['ward_name'] == ward_name][['longitude', 'latitude']] \
+                .iloc[0]
+            return (longitude, latitude)
+        return (106, 11)

@@ -10,6 +10,9 @@ from visualizations.components.PriceSlider import create_price_slider
 from visualizations.components.PetTypeDropdown import create_pet_type_dropdown
 from visualizations.components.Tabs import create_tabs
 from visualizations.components.NumberItems import create_number_items
+from visualizations.components.PetImage import create_pet_image
+# Models
+from models.load_model import Models
 
 
 external_script = [
@@ -26,6 +29,7 @@ app.scripts.config.serve_locally = True
 FILTER_BAR_HEIGHT = '4rem'
 
 pet_data = PetData('./data/new_pet_30_columns.json')
+models = Models('./models/pickles/')
 
 contents = list(range(4))
 
@@ -56,6 +60,16 @@ contents[2] = display_graph(
     show_display_mode_bar=False,
 )
 
+contents[3] = html.Div(
+    children=[
+        html.Img(
+            id='pet-img',
+            className='h-full hover:h-screen hover:top-0 hover:fixed'
+        )
+    ],
+    className='h-full',
+)
+
 pet_type_dropdown = create_pet_type_dropdown(pet_data=pet_data)
 slider = create_price_slider()
 filter_bar = html.Div(
@@ -67,12 +81,56 @@ main_content = html.Div(
     children=[
         html.Div(
             children=[contents[i]],
-            className=f'{"row-span-3" if i==1 else ""} {"col-span-2 row-span-2" if i in [0] else ""} relative p-0 {"rounded-xl border-2 border-slate-400/10 bg-white" if i != 0 else ""} flex justify-center items-center overflow-hidden'
+            className=f'{"row-span-3" if i==1 else ""} {"col-span-2 row-span-2 min-w-[70%]" if i in [0] else ""} relative p-0 {"rounded-xl border-2 border-slate-400/10 bg-white" if i != 0 else ""} flex justify-center items-center overflow-hidden'
         ) for i in range(len(contents))
     ],
     className='relative grow grid grid-cols-3 auto-rows-auto gap-[1rem]'
 )
 
+ml_items = {
+    'input-dropdown': [
+        {
+            'label': "Loài",
+            'option_col_name': 'pet_type_name',
+            'id': 'ml-type-dropdown'
+        },
+        {
+            'label': "Giống",
+            'option_col_name': 'pet_breed_name',
+            'id': 'ml-breed-dropdown',
+        },
+        {
+            'label': "Độ Tuổi",
+            'option_col_name': 'pet_age_name',
+            'id': 'ml-age-dropdown',
+        },
+        {
+            'label': "Kích Cỡ",
+            'option_col_name': 'pet_size_name',
+            'id': 'ml-size-dropdown',
+        },
+        {
+            'label': "Tỉnh/Thành Phố",
+            'option_col_name': 'region_name',
+            'id': 'ml-region-dropdown',
+        },
+        {
+            'label': "Quận/Huyện",
+            'option_col_name': 'area_name',
+            'id': 'ml-area-dropdown',
+        },
+        {
+            'label': "Xã/Thị Trấn",
+            'option_col_name': 'ward_name',
+            'id': 'ml-ward-dropdown',
+        },
+    ],
+    'output': [
+        {'id': 'linear', },
+        {'id': 'ridge', },
+        {'id': 'random_forest', },
+    ]
+}
 
 tab_contents = [
     {
@@ -82,7 +140,70 @@ tab_contents = [
     },
     {
         'label': 'M',
-        'content': ["Machine Learning"]
+        'content': [
+            html.Div(
+                children=[
+                    html.Div(
+                        "Dự Đoán Giá Thú Cưng",
+                        className="text-4xl font-bold text-center"
+                    ),
+                    html.Div(
+                        children=[
+                            html.Div(
+                                children=[
+                                    html.Div(
+                                        children=[
+                                            html.Div(
+                                                item['label'],
+                                                className="mb-2 font-bold text-center"
+                                            ),
+                                            dcc.Dropdown(
+                                                options=pet_data.get_options(
+                                                    item['option_col_name']),
+                                                id=item['id'],
+                                                className="w-[10rem] lg:w-[15rem]",
+                                            )
+                                        ]
+                                    ) for item in ml_items['input-dropdown']
+                                ],
+                                className="grid grid-cols-4 gap-2 justify-center items-center"
+                            ),
+                            html.Div(
+                                children=[
+                                    html.Button(
+                                        'Dự Đoán',
+                                        id='ml-submit-btn',
+                                        className="px-4 py-2 bg-gradient-to-tr from-[#37b7ee] to-[#86d1f3] to-80% rounded-md font-bold text-white",
+                                        n_clicks=0
+                                    ),
+                                ],
+                            ),
+                        ],
+                        className="px-8 py-4 flex flex-col items-center gap-4 rounded-xl border-2 border-slate-400/10 bg-white"
+                    ),
+                    html.Div(
+                        children=[
+                            html.Div(
+                                children=[
+                                    html.Div(
+                                        output_item['id'],
+                                        className="font-bold text-md"
+                                    ),
+                                    html.Div(
+                                        children=[],
+                                        id=output_item['id'],
+                                    )],
+                                className="h-full p-4 rounded-lg border-2 border-slate-400/10 bg-white",
+                            ) for output_item in ml_items['output']
+                        ],
+                        id="ml-output",
+                        className=f"grid grid-cols-{len(ml_items['output'])} auto-rows-[10rem] gap-2 justify-center items-center"
+                    )
+                ],
+                className="flex flex-col gap-4 "
+            )
+        ],
+        'override_className': 'h-screen w-full p-4 flex flex-col justify-center items-center'
     }
 ]
 app.layout = html.Div(
@@ -94,6 +215,41 @@ app.layout = html.Div(
 
 
 @callback(
+    [Output(output_item['id'], "children")
+        for output_item in ml_items['output']
+     ],
+    [Input(item['id'], 'value') for item in ml_items['input-dropdown']
+     ] + [Input('ml-submit-btn', 'n_clicks')],
+    prevent_initial_call=True
+)
+def update_ml_dashboard(chosen_type, chosen_breed, chosen_age, chosen_size, chosen_region, chosen_area, chosen_ward, n_clicks):
+    ctx = dash.callback_context
+
+    if ctx.triggered_id == 'ml-submit-btn' and n_clicks > 0:
+        chosen_breed_id = pet_data.get_breed_from_breed_name(chosen_breed)
+        chosen_coordinate = pet_data.get_approximate_coordinate(chosen_ward)
+        chosen_longitude, chosen_latitude = chosen_coordinate
+        print(chosen_breed_id, chosen_coordinate)
+        sample = {
+            'pet_type_name': chosen_type,
+            'pet_breed': chosen_breed_id,
+            'pet_breed_name': chosen_breed,
+            'pet_age_name': chosen_age,
+            'pet_size_name': chosen_size,
+            'region_name': chosen_region,
+            'area_name': chosen_area,
+            'ward_name': chosen_ward,
+            'longtitude': chosen_longitude,
+            'latitude': chosen_latitude,
+        }
+        result = models.predict(sample)
+
+        return tuple(f'{(result[key] * 1_000_000):.0f}' for key in result if key in [model['id'] for model in ml_items['output']])
+
+    return [dash.no_update for i in range(len(ml_items['output']))]
+
+
+@callback(
     [
         Output('map-graph', 'figure'),
         Output('box-graph', 'figure'),
@@ -101,7 +257,8 @@ app.layout = html.Div(
         Output('mean-price', 'children'),
         Output('n-pet-type', 'children'),
         Output('most-region', 'children'),
-        Output('n-post', 'children')
+        Output('n-post', 'children'),
+        Output('pet-img', 'src')
     ],
     [
         Input('pet-type-dropdown', 'value'),
@@ -128,6 +285,7 @@ def update_dashboard(chosen_pet_type, price_range):
     breed_bar_fig = update_pet_type_count_figure(df=filtered_df)
     n_type_number_items = len(pet_data.df.pet_type_name.unique())
     n_post = len(pet_data.df)
+    pet_image = create_pet_image(pet_data.df)
     if chosen_pet_type is not None:
         box_fig = update_breed_box_figure(
             df=filtered_df, pet_type=chosen_pet_type)
@@ -139,6 +297,7 @@ def update_dashboard(chosen_pet_type, price_range):
             pet_data.df_types[chosen_pet_type].pet_breed_name.unique()
         )
         n_post = len(pet_data.df_types[chosen_pet_type])
+        pet_image = create_pet_image(pet_data.df_types[chosen_pet_type])
 
     output_ = (
         map_fig,
@@ -148,7 +307,8 @@ def update_dashboard(chosen_pet_type, price_range):
         pet_data.get_mean_price_simplified(chosen_pet_type),
         n_type_number_items,
         pet_data.get_most_region(pet_type=chosen_pet_type),
-        n_post
+        n_post,
+        pet_image
     )
     return output_
 
