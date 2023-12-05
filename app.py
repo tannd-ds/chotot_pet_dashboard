@@ -11,6 +11,7 @@ from visualizations.components.PetTypeDropdown import create_pet_type_dropdown
 from visualizations.components.Tabs import create_tabs
 from visualizations.components.NumberItems import create_number_items
 from visualizations.components.PetImage import create_pet_image
+from visualizations.components.TabModel import ml_items, create_tab_model
 # Models
 from models.load_model import Models
 
@@ -87,51 +88,6 @@ main_content = html.Div(
     className='relative grow grid grid-cols-3 auto-rows-auto gap-[1rem]'
 )
 
-ml_items = {
-    'input-dropdown': [
-        {
-            'label': "Loài",
-            'option_col_name': 'pet_type_name',
-            'id': 'ml-type-dropdown'
-        },
-        {
-            'label': "Giống",
-            'option_col_name': 'pet_breed_name',
-            'id': 'ml-breed-dropdown',
-        },
-        {
-            'label': "Độ Tuổi",
-            'option_col_name': 'pet_age_name',
-            'id': 'ml-age-dropdown',
-        },
-        {
-            'label': "Kích Cỡ",
-            'option_col_name': 'pet_size_name',
-            'id': 'ml-size-dropdown',
-        },
-        {
-            'label': "Tỉnh/Thành Phố",
-            'option_col_name': 'region_name',
-            'id': 'ml-region-dropdown',
-        },
-        {
-            'label': "Quận/Huyện",
-            'option_col_name': 'area_name',
-            'id': 'ml-area-dropdown',
-        },
-        {
-            'label': "Xã/Thị Trấn",
-            'option_col_name': 'ward_name',
-            'id': 'ml-ward-dropdown',
-        },
-    ],
-    'output': [
-        {'id': 'linear', },
-        {'id': 'ridge', },
-        {'id': 'random_forest', },
-    ]
-}
-
 tab_contents = [
     {
         'label': 'A',
@@ -140,69 +96,8 @@ tab_contents = [
     },
     {
         'label': 'M',
-        'content': [
-            html.Div(
-                children=[
-                    html.Div(
-                        "Dự Đoán Giá Thú Cưng",
-                        className="text-4xl font-bold text-center"
-                    ),
-                    html.Div(
-                        children=[
-                            html.Div(
-                                children=[
-                                    html.Div(
-                                        children=[
-                                            html.Div(
-                                                item['label'],
-                                                className="mb-2 font-bold text-center"
-                                            ),
-                                            dcc.Dropdown(
-                                                options=pet_data.get_options(
-                                                    item['option_col_name']),
-                                                id=item['id'],
-                                                className="w-[10rem] lg:w-[15rem]",
-                                            )
-                                        ]
-                                    ) for item in ml_items['input-dropdown']
-                                ],
-                                className="grid grid-cols-4 gap-2 justify-center items-center"
-                            ),
-                            html.Div(
-                                children=[
-                                    html.Button(
-                                        'Dự Đoán',
-                                        id='ml-submit-btn',
-                                        className="px-4 py-2 bg-gradient-to-tr from-[#37b7ee] to-[#86d1f3] to-80% rounded-md font-bold text-white",
-                                        n_clicks=0
-                                    ),
-                                ],
-                            ),
-                        ],
-                        className="px-8 py-4 flex flex-col items-center gap-4 rounded-xl border-2 border-slate-400/10 bg-white"
-                    ),
-                    html.Div(
-                        children=[
-                            html.Div(
-                                children=[
-                                    html.Div(
-                                        output_item['id'],
-                                        className="font-bold text-md"
-                                    ),
-                                    html.Div(
-                                        children=[],
-                                        id=output_item['id'],
-                                    )],
-                                className="h-full p-4 rounded-lg border-2 border-slate-400/10 bg-white",
-                            ) for output_item in ml_items['output']
-                        ],
-                        id="ml-output",
-                        className=f"grid grid-cols-{len(ml_items['output'])} auto-rows-[10rem] gap-2 justify-center items-center"
-                    )
-                ],
-                className="flex flex-col gap-4 "
-            )
-        ],
+        'content': [create_tab_model(pet_data=pet_data),
+                    ],
         'override_className': 'h-screen w-full p-4 flex flex-col justify-center items-center'
     }
 ]
@@ -242,9 +137,9 @@ def update_ml_dashboard(chosen_type, chosen_breed, chosen_age, chosen_size, chos
             'longtitude': chosen_longitude,
             'latitude': chosen_latitude,
         }
-        result = models.predict(sample)
+        result = models.predict(sample, beautiful_display=True)
 
-        return tuple(f'{(result[key] * 1_000_000):.0f}' for key in result if key in [model['id'] for model in ml_items['output']])
+        return tuple(str(v) for k, v in result.items() if k in [model['id'] for model in ml_items['output']])
 
     return [dash.no_update for i in range(len(ml_items['output']))]
 

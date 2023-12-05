@@ -133,7 +133,7 @@ class Models():
 
         return True
 
-    def predict(self, dic):
+    def predict(self, dic, beautiful_display: bool = False):
         self.check_input(dic)
         pet_breed = self.breed.transform(
             np.reshape(dic['pet_breed'], -1)
@@ -185,11 +185,23 @@ class Models():
         output_decision = self.decision_tree_model.predict(pet_input).item()
 
         output = {
-            'linear': output_linear,
-            'lasso': output_lasso,
-            'ridge': output_ridge,
-            'random_forest': output_forest,
-            'decision_tree':  output_decision,
+            'linear': output_linear * 1e6,
+            'lasso': output_lasso * 1e6,
+            'ridge': output_ridge * 1e6,
+            'random_forest': output_forest * 1e6,
+            'decision_tree':  output_decision * 1e6,
         }
 
-        return output
+        if beautiful_display is True:
+            for k, o in output.items():
+                price_tags = ['', 'K', 'M', 'B']
+                n_divided = 0
+
+                while o > 1000:
+                    o /= 1_000
+                    n_divided += 1
+
+                o = f"{o:.2f}{price_tags[n_divided]}"
+                output[k] = o
+            return output
+        return {k: f'{v:.0f}' for (k, v) in output.items()}
