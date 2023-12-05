@@ -65,10 +65,16 @@ contents[3] = html.Div(
     children=[
         html.Img(
             id='pet-img',
-            className='h-full hover:h-screen hover:top-0 hover:fixed'
-        )
+            className='h-full'
+        ),
+        html.Button(
+            'Ảnh Khác',
+            id='pet-img-change',
+            className="absolute bottom-4 right-4 px-4 py-2 bg-gradient-to-tr from-[#37b7ee] to-[#86d1f3] to-80% rounded-md font-bold text-white",
+            n_clicks=0
+        ),
     ],
-    className='h-full',
+    className='h-full w-full flex justify-center relative',
 )
 
 pet_type_dropdown = create_pet_type_dropdown(pet_data=pet_data)
@@ -85,7 +91,7 @@ main_content = html.Div(
             className=f'{"row-span-3" if i==1 else ""} {"col-span-2 row-span-2 min-w-[70%]" if i in [0] else ""} relative p-0 {"rounded-xl border-2 border-slate-400/10 bg-white" if i != 0 else ""} flex justify-center items-center overflow-hidden'
         ) for i in range(len(contents))
     ],
-    className='relative grow grid grid-cols-3 auto-rows-auto gap-[1rem]'
+    className='relative grow grid grid-cols-3 auto-rows-[calc((100vh_-_8rem)/3)] gap-[1rem]'
 )
 
 tab_contents = [
@@ -107,6 +113,21 @@ app.layout = html.Div(
     ],
     className="flex justify-start gap-2 bg-zinc-100",
 )
+
+
+@callback(
+    Output('pet-img', 'src'),
+    [
+        Input('pet-type-dropdown', 'value'),
+        Input('pet-img-change', 'n_clicks'),
+    ],
+    allow_duplicate=True,
+)
+def change_pet_img(chosen_pet_type, n_clicks):
+    pet_image = create_pet_image(pet_data.df)
+    if chosen_pet_type is not None:
+        pet_image = create_pet_image(pet_data.df_types[chosen_pet_type])
+    return pet_image
 
 
 @callback(
@@ -153,14 +174,15 @@ def update_ml_dashboard(chosen_type, chosen_breed, chosen_age, chosen_size, chos
         Output('n-pet-type', 'children'),
         Output('most-region', 'children'),
         Output('n-post', 'children'),
-        Output('pet-img', 'src')
     ],
     [
         Input('pet-type-dropdown', 'value'),
         Input('price-slider', 'value'),
-    ]
+    ],
 )
 def update_dashboard(chosen_pet_type, price_range):
+    ctx = dash.callback_context
+
     # filter pet_type
     if chosen_pet_type is None:
         filtered_df = pet_data.df
@@ -180,7 +202,6 @@ def update_dashboard(chosen_pet_type, price_range):
     breed_bar_fig = update_pet_type_count_figure(df=filtered_df)
     n_type_number_items = len(pet_data.df.pet_type_name.unique())
     n_post = len(pet_data.df)
-    pet_image = create_pet_image(pet_data.df)
     if chosen_pet_type is not None:
         box_fig = update_breed_box_figure(
             df=filtered_df, pet_type=chosen_pet_type)
@@ -192,7 +213,6 @@ def update_dashboard(chosen_pet_type, price_range):
             pet_data.df_types[chosen_pet_type].pet_breed_name.unique()
         )
         n_post = len(pet_data.df_types[chosen_pet_type])
-        pet_image = create_pet_image(pet_data.df_types[chosen_pet_type])
 
     output_ = (
         map_fig,
@@ -203,7 +223,6 @@ def update_dashboard(chosen_pet_type, price_range):
         n_type_number_items,
         pet_data.get_most_region(pet_type=chosen_pet_type),
         n_post,
-        pet_image
     )
     return output_
 
